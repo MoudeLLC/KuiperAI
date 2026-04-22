@@ -84,11 +84,11 @@ model = Transformer(
 )
 
 # Count parameters
-total_params = sum(p.size for p in model.parameters())
+total_params = sum(p.data.size for p in model.parameters())
 print(f"  ✓ Model parameters: {total_params:,}")
 
 # Initialize optimizer and loss
-optimizer = Adam(learning_rate=0.0001, weight_decay=0.1)
+optimizer = Adam(model.parameters(), learning_rate=0.0001, weight_decay=0.1)
 loss_fn = CrossEntropyLoss()
 
 # Training loop
@@ -143,7 +143,7 @@ for epoch in range(epochs):
                     param.grad *= clip_coef
         
         # Update weights
-        optimizer.step(model.parameters())
+        optimizer.step()
         
         # Track loss
         loss_value = loss.data.item() if hasattr(loss.data, 'item') else float(loss.data)
