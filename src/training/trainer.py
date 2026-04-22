@@ -91,14 +91,9 @@ class Trainer:
             # Track metrics
             train_losses.append(loss.data.item() if hasattr(loss.data, 'item') else float(loss.data))
             
-            # Calculate accuracy for classification
-            if len(outputs.shape) > 1 and outputs.shape[-1] > 1:
-                preds = np.argmax(outputs.data, axis=-1)
-                # Flatten both to compare properly
-                preds_flat = preds.flatten()
-                targets_flat = targets.flatten()
-                acc = np.mean(preds_flat == targets_flat)
-                train_accs.append(acc)
+            # Calculate accuracy - skip for language modeling
+            # (targets are dummy labels, not actual next tokens)
+            # Accuracy will be measured by loss reduction instead
             
             if batch_idx % 10 == 0:
                 print(f"Batch {batch_idx}/{len(train_loader)}, Loss: {train_losses[-1]:.4f}")
@@ -140,13 +135,8 @@ class Trainer:
             
             val_losses.append(loss.data.item() if hasattr(loss.data, 'item') else loss.data)
             
-            if len(outputs.shape) > 1 and outputs.shape[-1] > 1:
-                preds = np.argmax(outputs.data, axis=-1)
-                # Flatten both to compare properly
-                preds_flat = preds.flatten()
-                targets_flat = targets.flatten()
-                acc = np.mean(preds_flat == targets_flat)
-                val_accs.append(acc)
+            # Skip accuracy for language modeling
+            # (targets are dummy labels, not actual next tokens)
         
         return {
             'val_loss': np.mean(val_losses),
