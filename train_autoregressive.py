@@ -80,15 +80,15 @@ model = Transformer(
     num_layers=6,
     d_ff=1024,
     max_seq_len=max_length,
-    dropout=0.3  # Moderate dropout
+    dropout=0.3
 )
 
 # Count parameters
 total_params = sum(p.data.size for p in model.parameters())
 print(f"  ✓ Model parameters: {total_params:,}")
 
-# Initialize optimizer and loss
-optimizer = Adam(model.parameters(), learning_rate=0.0001, weight_decay=0.1)
+# Initialize optimizer and loss - FIX: use 'lr' not 'learning_rate'
+optimizer = Adam(model.parameters(), lr=0.0001, weight_decay=0.1)
 loss_fn = CrossEntropyLoss()
 
 # Training loop
@@ -118,8 +118,8 @@ for epoch in range(epochs):
         # Reshape for loss calculation
         # outputs: (batch_size * seq_len, vocab_size)
         # targets: (batch_size * seq_len,)
-        batch_size_actual, seq_len, vocab_size = outputs.shape
-        outputs_flat = outputs.reshape(-1, vocab_size)
+        batch_size_actual, seq_len, vocab_size_actual = outputs.shape
+        outputs_flat = outputs.reshape(batch_size_actual * seq_len, vocab_size_actual)
         targets_flat = targets.reshape(-1)
         
         # Calculate loss (only on non-padding tokens)
@@ -146,7 +146,7 @@ for epoch in range(epochs):
         optimizer.step()
         
         # Track loss
-        loss_value = loss.data.item() if hasattr(loss.data, 'item') else float(loss.data)
+        loss_value = float(loss.data) if hasattr(loss.data, 'item') else float(loss.data)
         epoch_losses.append(loss_value)
         
         if batch_idx % 10 == 0:

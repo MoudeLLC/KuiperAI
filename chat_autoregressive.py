@@ -17,7 +17,13 @@ print("=" * 70)
 
 # Load vocabulary
 print("\n🔤 Loading vocabulary...")
-with open('checkpoints/vocab.json', 'r') as f:
+vocab_path = Path('checkpoints/vocab.json')
+if not vocab_path.exists():
+    print("  ⚠ No vocabulary found!")
+    print("  Run train_autoregressive.py first")
+    sys.exit(1)
+
+with open(vocab_path, 'r') as f:
     vocab = json.load(f)
 
 idx_to_token = {v: k for k, v in vocab.items()}
@@ -79,7 +85,7 @@ def generate_text(prompt, max_new_tokens=50, temperature=0.8, top_k=40):
         output = model.forward(input_array)  # (1, seq_len, vocab_size)
         
         # Get logits for next token (last position)
-        next_token_logits = output[0, -1, :]  # (vocab_size,)
+        next_token_logits = output.data[0, -1, :]  # (vocab_size,)
         
         # Apply temperature
         next_token_logits = next_token_logits / temperature
@@ -112,7 +118,7 @@ def generate_text(prompt, max_new_tokens=50, temperature=0.8, top_k=40):
             continue
         
         # Add to sequence
-        tokens.append(next_token)
+        tokens.append(int(next_token))
     
     # Decode tokens (skip <SOS>)
     generated_tokens = tokens[1:]  # Skip <SOS>
