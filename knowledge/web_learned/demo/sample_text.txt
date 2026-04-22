@@ -1,0 +1,24 @@
+Source: knowledge/datasets/nlp/sample_text.txt
+Topic: demo
+Learned: 2026-04-21 19:54:51
+======================================================================
+
+Natural language processing is a subfield of artificial intelligence that focuses on the interaction between computers and human language. It involves teaching machines to understand, interpret, and generate human language in a valuable way.
+
+Machine learning algorithms form the foundation of modern NLP systems. These algorithms learn patterns from large amounts of text data and use those patterns to make predictions or generate new text.
+
+Deep learning has revolutionized natural language processing. Neural networks with multiple layers can capture complex linguistic patterns and relationships that were previously difficult to model.
+
+Transformers are a type of neural network architecture that has become dominant in NLP. They use self-attention mechanisms to process sequences of text in parallel, making them both powerful and efficient.
+
+Language models are trained to predict the next word in a sequence. By learning from vast amounts of text, they develop an understanding of grammar, semantics, and even some reasoning capabilities.
+
+Text classification is a common NLP task where the goal is to assign labels to text documents. Applications include sentiment analysis, spam detection, and topic categorization.
+
+Named entity recognition identifies and classifies named entities in text, such as person names, organizations, locations, and dates. This is useful for information extraction and knowledge base construction.
+
+Machine translation automatically translates text from one language to another. Modern neural machine translation systems can produce high-quality translations for many language pairs.
+
+Question answering systems can understand natural language questions and provide relevant answers. These systems combine information retrieval with natural language understanding.
+
+Text generation involves creating coherent and contextually appropriate text. Applications range from chatbots and virtual assistants to creative writing aids and code generation.

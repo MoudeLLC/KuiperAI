@@ -1,0 +1,44 @@
+# KuiperAI Transformer Base Configuration
+
+model:
+  type: transformer
+  d_model: 512
+  num_heads: 8
+  num_layers: 6
+  d_ff: 2048
+  max_seq_len: 512
+  dropout: 0.1
+
+data:
+  knowledge_base_path: knowledge
+  domains:
+    - nlp
+    - general
+    - code
+  train_split: 0.9
+  max_length: 512
+
+training:
+  batch_size: 32
+  epochs: 50
+  seed: 42
+  
+  optimizer:
+    type: adamw
+    lr: 0.0001
+    weight_decay: 0.01
+  
+  early_stopping_patience: 5
+  
+  checkpoint_dir: checkpoints
+  log_dir: logs
+
+evaluation:
+  metrics:
+    - accuracy
+    - perplexity
+    - f1_score
+  
+  benchmark_datasets:
+    - test_general
+    - test_reasoning

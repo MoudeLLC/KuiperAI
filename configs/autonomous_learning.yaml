@@ -1,0 +1,63 @@
+# KuiperAI Autonomous Learning Configuration
+# This config enables continuous background learning
+
+autonomous_learning:
+  enabled: true
+  
+  # Schedule settings
+  schedule:
+    interval_minutes: 30  # Run every 30 minutes (half hour)
+    max_runs: 1000        # Stop after 1000 research cycles
+    
+  # Research settings
+  research:
+    words_per_cycle: 5    # Research 5 words per cycle
+    max_depth: 3          # How deep to go in vocabulary expansion
+    
+  # Web search settings
+  web_search:
+    enabled: true
+    max_results: 10       # Max results per search
+    timeout_seconds: 30
+    
+  # Learning targets
+  targets:
+    - vocabulary_expansion
+    - grammar_rules
+    - language_patterns
+    - domain_knowledge
+    - multilingual_learning
+    
+  # Notification settings
+  notifications:
+    enabled: true
+    notify_every: 100     # Notify every 100 cycles
+    notify_at_completion: true
+    send_summary: true
+    
+  # Data management
+  data:
+    auto_save: true
+    save_interval: 10     # Save every 10 cycles
+    backup_enabled: true
+    max_knowledge_size_mb: 1000
+    
+  # Training integration
+  training:
+    auto_train: true
+    train_every: 50       # Retrain model every 50 cycles
+    min_new_samples: 100  # Minimum new samples before training
+    epochs: 20
+    
+  # Safety settings
+  safety:
+    content_filter: true
+    max_memory_mb: 2000
+    rate_limit_per_hour: 100
+    
+  # Output settings
+  output:
+    log_file: 'logs/autonomous_learning.log'
+    stats_file: 'knowledge/ecosystem_stats.json'
+    knowledge_file: 'knowledge/ecosystem_knowledge.txt'
+    vocab_file: 'knowledge/ecosystem_vocab.json'

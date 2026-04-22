@@ -1,0 +1,24 @@
+Source: knowledge/datasets/general/sample_knowledge.txt
+Topic: test_topic
+Learned: 2026-04-21 19:59:03
+======================================================================
+
+Artificial intelligence refers to the simulation of human intelligence in machines that are programmed to think and learn. AI systems can perform tasks that typically require human intelligence, such as visual perception, speech recognition, decision-making, and language translation.
+
+The history of AI dates back to the 1950s when Alan Turing proposed the Turing Test as a measure of machine intelligence. Since then, the field has evolved through multiple waves of progress and setbacks.
+
+Neural networks are computing systems inspired by biological neural networks in animal brains. They consist of interconnected nodes or neurons that process information and learn from experience.
+
+Supervised learning is a type of machine learning where the algorithm learns from labeled training data. The model makes predictions based on input data and is corrected when its predictions are incorrect.
+
+Unsupervised learning involves training algorithms on unlabeled data. The system tries to learn patterns and structures from the data without explicit guidance about what to look for.
+
+Reinforcement learning is a type of machine learning where an agent learns to make decisions by performing actions and receiving rewards or penalties. This approach is inspired by behavioral psychology.
+
+Computer vision enables machines to interpret and understand visual information from the world. Applications include image recognition, object detection, facial recognition, and autonomous vehicles.
+
+Robotics combines AI with mechanical engineering to create machines that can perform physical tasks. Modern robots use AI for navigation, manipulation, and interaction with their environment.
+
+Ethics in AI is an increasingly important field that addresses questions about fairness, transparency, accountability, and the societal impact of AI systems. Ensuring AI benefits humanity requires careful consideration of these issues.
+
+The future of AI holds immense potential for solving complex problems in healthcare, climate change, education, and many other domains. However, it also requires responsible development and deployment to address potential risks.
