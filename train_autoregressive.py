@@ -79,7 +79,7 @@ model = Transformer(
     num_heads=8,
     num_layers=6,
     d_ff=1024,
-    max_seq_length=max_length,
+    max_seq_len=max_length,
     dropout=0.3  # Moderate dropout
 )
 
