@@ -159,7 +159,22 @@ for epoch in range(epochs):
     # Save best model
     if avg_loss < best_loss:
         best_loss = avg_loss
-        model.save('checkpoints/autoregressive_best.pt')
+        
+        # Save model parameters
+        import pickle
+        model_state = {
+            'parameters': [p.data for p in model.parameters()],
+            'vocab_size': len(vocab),
+            'd_model': 256,
+            'num_heads': 8,
+            'num_layers': 6,
+            'd_ff': 1024,
+            'max_seq_len': max_length,
+            'dropout': 0.3
+        }
+        with open('checkpoints/autoregressive_best.pt', 'wb') as f:
+            pickle.dump(model_state, f)
+        
         print(f"  ✓ Saved best model (loss: {best_loss:.4f})")
 
 print("\n" + "=" * 70)

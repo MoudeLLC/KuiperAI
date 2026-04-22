@@ -43,7 +43,16 @@ model = Transformer(
 
 checkpoint_path = Path('checkpoints/autoregressive_best.pt')
 if checkpoint_path.exists():
-    model.load(str(checkpoint_path))
+    import pickle
+    with open(checkpoint_path, 'rb') as f:
+        model_state = pickle.load(f)
+    
+    # Load parameters into model
+    model_params = model.parameters()
+    for i, param_data in enumerate(model_state['parameters']):
+        if i < len(model_params):
+            model_params[i].data = param_data
+    
     total_params = sum(p.data.size for p in model.parameters())
     print(f"  ✓ Model loaded!")
     print(f"  ✓ Parameters: {total_params:,}")
