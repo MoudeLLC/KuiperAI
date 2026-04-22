@@ -8,8 +8,8 @@ sys.path.insert(0, 'src')
 import numpy as np
 from pathlib import Path
 from models.transformer import Transformer
-from training.optimizer import Adam
-from training.loss import CrossEntropyLoss
+from core.optimizers import Adam
+from core.losses import CrossEntropyLoss
 
 print("=" * 70)
 print("AUTOREGRESSIVE LANGUAGE MODEL TRAINING")
