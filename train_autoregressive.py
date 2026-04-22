@@ -83,7 +83,9 @@ model = Transformer(
     dropout=0.3  # Moderate dropout
 )
 
-print(f"  ✓ Model parameters: {model.count_parameters():,}")
+# Count parameters
+total_params = sum(p.size for p in model.parameters())
+print(f"  ✓ Model parameters: {total_params:,}")
 
 # Initialize optimizer and loss
 optimizer = Adam(learning_rate=0.0001, weight_decay=0.1)

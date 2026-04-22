@@ -38,8 +38,9 @@ model = Transformer(
 checkpoint_path = Path('checkpoints/autoregressive_best.pt')
 if checkpoint_path.exists():
     model.load(str(checkpoint_path))
+    total_params = sum(p.size for p in model.parameters())
     print(f"  ✓ Model loaded!")
-    print(f"  ✓ Parameters: {model.count_parameters():,}")
+    print(f"  ✓ Parameters: {total_params:,}")
 else:
     print(f"  ⚠ No checkpoint found!")
     print("  Run train_autoregressive.py first")
