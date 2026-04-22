@@ -94,7 +94,10 @@ class Trainer:
             # Calculate accuracy for classification
             if len(outputs.shape) > 1 and outputs.shape[-1] > 1:
                 preds = np.argmax(outputs.data, axis=-1)
-                acc = np.mean(preds == targets)
+                # Flatten both to compare properly
+                preds_flat = preds.flatten()
+                targets_flat = targets.flatten()
+                acc = np.mean(preds_flat == targets_flat)
                 train_accs.append(acc)
             
             if batch_idx % 10 == 0:
@@ -139,7 +142,10 @@ class Trainer:
             
             if len(outputs.shape) > 1 and outputs.shape[-1] > 1:
                 preds = np.argmax(outputs.data, axis=-1)
-                acc = np.mean(preds == targets)
+                # Flatten both to compare properly
+                preds_flat = preds.flatten()
+                targets_flat = targets.flatten()
+                acc = np.mean(preds_flat == targets_flat)
                 val_accs.append(acc)
         
         return {
