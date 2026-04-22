@@ -363,3 +363,17 @@ class Transformer(Layer):
             generated = np.concatenate([generated, [[next_token]]], axis=1)
         
         return generated
+    
+    def save(self, path: str):
+        """Save model parameters to file"""
+        params_dict = {}
+        for i, param in enumerate(self.parameters()):
+            params_dict[f'param_{i}'] = param.data
+        np.savez(path, **params_dict)
+    
+    def load(self, path: str):
+        """Load model parameters from file"""
+        data = np.load(path)
+        params = self.parameters()
+        for i, param in enumerate(params):
+            param.data = data[f'param_{i}']
