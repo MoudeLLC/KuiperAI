@@ -41,9 +41,14 @@ model = Transformer(
     dropout=0.3
 )
 
-checkpoint_path = Path('checkpoints/autoregressive_best.pt.npz')
+# Try advanced model first, fallback to autoregressive
+checkpoint_path = Path('checkpoints/advanced_best.pt.npz')
+if not checkpoint_path.exists():
+    checkpoint_path = Path('checkpoints/autoregressive_best.pt.npz')
+
 if checkpoint_path.exists():
-    model.load('checkpoints/autoregressive_best.pt')
+    model_name = 'advanced_best.pt' if 'advanced' in str(checkpoint_path) else 'autoregressive_best.pt'
+    model.load(f'checkpoints/{model_name}')
     total_params = sum(p.data.size for p in model.parameters())
     print(f"  ✓ Model loaded!")
     print(f"  ✓ Parameters: {total_params:,}")
