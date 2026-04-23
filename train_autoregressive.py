@@ -98,7 +98,14 @@ print("=" * 70)
 epochs = 30
 best_loss = float('inf')
 
-Path('checkpoints').mkdir(exist_ok=True)
+# Use /kaggle/working if in Kaggle, otherwise use local checkpoints
+import os
+if os.path.exists('/kaggle/working'):
+    checkpoint_dir = '/kaggle/working/checkpoints'
+else:
+    checkpoint_dir = 'checkpoints'
+
+Path(checkpoint_dir).mkdir(exist_ok=True)
 
 for epoch in range(epochs):
     print(f"\nEpoch {epoch + 1}/{epochs}")
@@ -159,19 +166,19 @@ for epoch in range(epochs):
     # Save best model
     if avg_loss < best_loss:
         best_loss = avg_loss
-        model.save('checkpoints/autoregressive_best.pt')
+        model.save(f'{checkpoint_dir}/autoregressive_best.pt')
         print(f"  ✓ Saved best model (loss: {best_loss:.4f})")
 
 print("\n" + "=" * 70)
 print("TRAINING COMPLETE!")
 print("=" * 70)
 print(f"Best Loss: {best_loss:.4f}")
-print(f"Model saved to: checkpoints/autoregressive_best.pt")
-print(f"Vocabulary saved to: checkpoints/vocab.json")
+print(f"Model saved to: {checkpoint_dir}/autoregressive_best.pt")
+print(f"Vocabulary saved to: {checkpoint_dir}/vocab.json")
 
 # Save vocabulary
 import json
-with open('checkpoints/vocab.json', 'w') as f:
+with open(f'{checkpoint_dir}/vocab.json', 'w') as f:
     json.dump(vocab, f, indent=2)
 
 print("\n✓ Ready for generation with chat_autoregressive.py")
