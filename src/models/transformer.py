@@ -373,6 +373,9 @@ class Transformer(Layer):
     
     def load(self, path: str):
         """Load model parameters from file"""
+        # np.load needs the .npz extension
+        if not path.endswith('.npz'):
+            path = path + '.npz'
         data = np.load(path)
         params = self.parameters()
         for i, param in enumerate(params):

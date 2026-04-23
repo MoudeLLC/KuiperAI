@@ -41,9 +41,9 @@ model = Transformer(
     dropout=0.3
 )
 
-checkpoint_path = Path('checkpoints/autoregressive_best.pt')
+checkpoint_path = Path('checkpoints/autoregressive_best.pt.npz')
 if checkpoint_path.exists():
-    model.load(str(checkpoint_path))
+    model.load('checkpoints/autoregressive_best.pt')
     total_params = sum(p.data.size for p in model.parameters())
     print(f"  ✓ Model loaded!")
     print(f"  ✓ Parameters: {total_params:,}")
