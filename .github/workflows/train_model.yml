@@ -271,6 +271,30 @@ jobs:
         
         chmod +x train_with_bpe.py
     
+    - name: Test training script
+      run: |
+        echo "Testing script syntax..."
+        python3 -m py_compile train_with_bpe.py
+        echo "✓ Script syntax OK"
+        
+        echo "Testing imports..."
+        python3 -c "
+        import sys
+        sys.path.insert(0, 'src')
+        try:
+            import numpy as np
+            print('✓ numpy imported')
+            from tokenizers import Tokenizer
+            print('✓ tokenizers imported')
+            from models.transformer import Transformer
+            print('✓ Transformer imported')
+        except Exception as e:
+            print(f'❌ Import error: {e}')
+            import traceback
+            traceback.print_exc()
+            sys.exit(1)
+        "
+    
     - name: Train model
       run: |
         python3 train_with_bpe.py ${{ github.event.inputs.epochs || '30' }} ${{ github.event.inputs.batch_size || '32' }} 2>&1 | tee training.log
