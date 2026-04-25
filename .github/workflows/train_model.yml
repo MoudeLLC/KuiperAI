@@ -98,7 +98,7 @@ jobs:
         sequences = []
         max_seq_len = 64
         
-        for text in all_text[:1000]:  # Limit for speed
+        for text in all_text[:500]:  # Reduced from 1000
             encoding = tokenizer.encode(text)
             token_ids = encoding.ids
             
@@ -107,13 +107,17 @@ jobs:
                 seq = token_ids[i:i + max_seq_len]
                 if len(seq) == max_seq_len:
                     sequences.append(seq)
+                    if len(sequences) >= 2000:  # Limit total sequences
+                        break
+            if len(sequences) >= 2000:
+                break
         
         print(f"  ✓ Created {len(sequences)} sequences")
         
         if len(sequences) < 100:
             print("  ⚠️  Not enough sequences, generating synthetic data...")
             # Add some synthetic sequences
-            for _ in range(500):
+            for _ in range(300):  # Reduced from 500
                 seq = np.random.randint(5, vocab_size, size=max_seq_len).tolist()
                 sequences.append(seq)
             print(f"  ✓ Total sequences: {len(sequences)}")
@@ -126,10 +130,10 @@ jobs:
         print("\n🧠 Creating model...")
         model = Transformer(
             vocab_size=vocab_size,
-            d_model=256,
-            num_heads=8,
-            num_layers=4,
-            d_ff=1024,
+            d_model=128,  # Reduced from 256
+            num_heads=4,   # Reduced from 8
+            num_layers=2,  # Reduced from 4
+            d_ff=512,      # Reduced from 1024
             max_seq_len=max_seq_len,
             dropout=0.1
         )
@@ -152,6 +156,7 @@ jobs:
         # Training loop
         print("\n🚀 Starting training...")
         print("=" * 70)
+        print(f"⚠️  Memory-optimized mode: Small model, limited data")
         
         best_loss = float('inf')
         
