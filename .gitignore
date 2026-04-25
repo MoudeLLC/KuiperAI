@@ -39,13 +39,24 @@ ENV/
 *.ipynb
 
 # Training artifacts
-checkpoints/
+checkpoints/*.pt
+checkpoints/*.pth
+checkpoints/*.ckpt
+checkpoints/*.npz
 logs/
 runs/
-*.pt
-*.pth
-*.ckpt
+
+# Allow vocabulary files in checkpoints
+!checkpoints/vocab*.json
+!checkpoints/tokenizer*.json
+!checkpoints/*stats*.json
+!checkpoints/*.md
+
+# Block other JSON files
 *.json
+!checkpoints/vocab*.json
+!checkpoints/tokenizer*.json
+!checkpoints/*stats*.json
 
 # Data
 knowledge/datasets/*
