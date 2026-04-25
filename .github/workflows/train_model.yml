@@ -178,16 +178,21 @@ jobs:
                 # Target is next token
                 targets = np.roll(batch, -1, axis=1)
                 
-                # Calculate loss (simplified)
+                # Calculate loss (simplified with numerical stability)
                 loss = 0.0
                 for b in range(len(batch)):
                     for t in range(batch.shape[1] - 1):
                         target_id = targets[b, t]
                         if target_id < vocab_size:
                             pred = output.data[b, t, target_id]
-                            loss += -np.log(np.clip(pred, 1e-10, 1.0))
+                            # Clip to prevent overflow/underflow
+                            pred = np.clip(pred, 1e-7, 1.0 - 1e-7)
+                            # Use log with safety checks
+                            log_pred = np.log(pred)
+                            # Clip loss to prevent extreme values
+                            loss += -np.clip(log_pred, -10.0, 0.0)
                 
-                loss = loss / (len(batch) * (batch.shape[1] - 1))
+                loss = loss / max(1, len(batch) * (batch.shape[1] - 1))
                 total_loss += loss
                 num_batches += 1
                 
@@ -195,10 +200,12 @@ jobs:
                 # In real training, you'd compute gradients properly
                 output.backward()
                 
-                # Update weights
+                # Update weights with gradient clipping
                 for param in model.parameters():
                     if hasattr(param, 'grad') and param.grad is not None:
-                        param.data -= learning_rate * param.grad
+                        # Clip gradients to prevent explosion
+                        grad = np.clip(param.grad, -1.0, 1.0)
+                        param.data -= learning_rate * grad
                         param.grad = None
             
             avg_loss = total_loss / num_batches if num_batches > 0 else 0
