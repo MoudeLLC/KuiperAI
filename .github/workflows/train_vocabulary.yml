@@ -37,6 +37,7 @@ jobs:
       with:
         fetch-depth: 0
         token: ${{ secrets.GITHUB_TOKEN }}
+        persist-credentials: true
     
     - name: Set up Python
       uses: actions/setup-python@v5
@@ -105,7 +106,7 @@ jobs:
           echo "No vocabulary changes to commit"
         else
           git commit -m "🤖 Auto-update vocabulary ($(date +'%Y-%m-%d'))"
-          git push
+          git push https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}.git HEAD:main
         fi
     
     - name: Upload vocabulary artifacts
