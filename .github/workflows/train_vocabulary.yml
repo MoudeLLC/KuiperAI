@@ -94,10 +94,11 @@ jobs:
         git config --local user.email "github-actions[bot]@users.noreply.github.com"
         git config --local user.name "github-actions[bot]"
         
-        # Add vocabulary files
-        git add checkpoints/vocab_bpe_*.json
-        git add checkpoints/tokenizer_bpe_*.json
-        git add checkpoints/vocab_report.md
+        # Add vocabulary files (force add to override .gitignore)
+        git add -f checkpoints/vocab_bpe_*.json || true
+        git add -f checkpoints/tokenizer_bpe_*.json || true
+        git add -f checkpoints/vocab_stats_*.json || true
+        git add -f checkpoints/vocab_report.md || true
         
         # Check if there are changes
         if git diff --staged --quiet; then
