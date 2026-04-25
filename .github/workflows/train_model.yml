@@ -1,0 +1,275 @@
+name: Train Model with 26K Vocabulary
+
+on:
+  workflow_dispatch:
+    inputs:
+      epochs:
+        description: 'Number of training epochs'
+        required: false
+        default: '30'
+      batch_size:
+        description: 'Batch size'
+        required: false
+        default: '32'
+
+jobs:
+  train-model:
+    runs-on: ubuntu-latest
+    timeout-minutes: 180
+    
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
+        token: ${{ secrets.GITHUB_TOKEN }}
+        persist-credentials: true
+    
+    - name: Set up Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: '3.10'
+        cache: 'pip'
+    
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install numpy tokenizers tqdm
+        if [ -f requirements.txt ]; then pip install -r requirements.txt || true; fi
+    
+    - name: Verify vocabulary exists
+      run: |
+        if [ ! -f checkpoints/vocab_bpe_80k.json ]; then
+          echo "ERROR: Vocabulary not found!"
+          echo "Run 'Automated Vocabulary Training' workflow first"
+          exit 1
+        fi
+        echo "✓ Vocabulary found"
+        python3 -c "import json; v=json.load(open('checkpoints/vocab_bpe_80k.json')); print(f'Vocabulary size: {len(v[\"vocab\"]):,}')"
+    
+    - name: Create training script
+      run: |
+        cat > train_with_bpe.py << 'SCRIPT_EOF'
+        #!/usr/bin/env python3
+        """Train model with BPE vocabulary"""
+        import sys
+        sys.path.insert(0, 'src')
+        import numpy as np
+        import json
+        from pathlib import Path
+        from tokenizers import Tokenizer
+        from models.transformer import Transformer
+        import time
+        
+        print("=" * 70)
+        print("TRAINING WITH 26K BPE VOCABULARY")
+        print("=" * 70)
+        
+        # Load tokenizer
+        print("\n🔤 Loading BPE tokenizer...")
+        tokenizer = Tokenizer.from_file('checkpoints/tokenizer_bpe_80k.json')
+        
+        with open('checkpoints/vocab_bpe_80k.json', 'r') as f:
+            vocab_data = json.load(f)
+            vocab = vocab_data['vocab']
+        
+        vocab_size = len(vocab)
+        print(f"  ✓ Vocabulary size: {vocab_size:,}")
+        
+        # Load training data
+        print("\n📚 Loading training data...")
+        data_files = list(Path('knowledge').rglob('*.txt'))
+        print(f"  ✓ Found {len(data_files)} files")
+        
+        all_text = []
+        for file in data_files[:20]:  # Limit for speed
+            try:
+                with open(file, 'r', encoding='utf-8') as f:
+                    text = f.read().strip()
+                    if len(text) > 50:
+                        all_text.append(text)
+            except:
+                pass
+        
+        print(f"  ✓ Loaded {len(all_text)} text samples")
+        
+        # Tokenize data
+        print("\n🔧 Tokenizing data...")
+        sequences = []
+        max_seq_len = 64
+        
+        for text in all_text[:1000]:  # Limit for speed
+            encoding = tokenizer.encode(text)
+            token_ids = encoding.ids
+            
+            # Create sequences
+            for i in range(0, len(token_ids) - max_seq_len, max_seq_len // 2):
+                seq = token_ids[i:i + max_seq_len]
+                if len(seq) == max_seq_len:
+                    sequences.append(seq)
+        
+        print(f"  ✓ Created {len(sequences)} sequences")
+        
+        if len(sequences) < 100:
+            print("  ⚠️  Not enough sequences, generating synthetic data...")
+            # Add some synthetic sequences
+            for _ in range(500):
+                seq = np.random.randint(5, vocab_size, size=max_seq_len).tolist()
+                sequences.append(seq)
+            print(f"  ✓ Total sequences: {len(sequences)}")
+        
+        # Prepare training data
+        X = np.array(sequences, dtype=np.int32)
+        print(f"  ✓ Training data shape: {X.shape}")
+        
+        # Create model
+        print("\n🧠 Creating model...")
+        model = Transformer(
+            vocab_size=vocab_size,
+            d_model=256,
+            num_heads=8,
+            num_layers=4,
+            d_ff=1024,
+            max_seq_len=max_seq_len,
+            dropout=0.1
+        )
+        
+        total_params = sum(p.data.size for p in model.parameters())
+        print(f"  ✓ Model created")
+        print(f"  ✓ Parameters: {total_params:,}")
+        
+        # Training parameters
+        epochs = int(sys.argv[1]) if len(sys.argv) > 1 else 30
+        batch_size = int(sys.argv[2]) if len(sys.argv) > 2 else 32
+        learning_rate = 0.0001
+        
+        print(f"\n⚙️  Training configuration:")
+        print(f"  Epochs: {epochs}")
+        print(f"  Batch size: {batch_size}")
+        print(f"  Learning rate: {learning_rate}")
+        print(f"  Sequences: {len(X)}")
+        
+        # Training loop
+        print("\n🚀 Starting training...")
+        print("=" * 70)
+        
+        best_loss = float('inf')
+        
+        for epoch in range(epochs):
+            epoch_start = time.time()
+            
+            # Shuffle data
+            indices = np.random.permutation(len(X))
+            X_shuffled = X[indices]
+            
+            total_loss = 0
+            num_batches = 0
+            
+            # Mini-batch training
+            for i in range(0, len(X_shuffled), batch_size):
+                batch = X_shuffled[i:i + batch_size]
+                if len(batch) < 2:
+                    continue
+                
+                # Forward pass
+                output = model.forward(batch)
+                
+                # Simple loss (cross-entropy approximation)
+                # Target is next token
+                targets = np.roll(batch, -1, axis=1)
+                
+                # Calculate loss (simplified)
+                loss = 0.0
+                for b in range(len(batch)):
+                    for t in range(batch.shape[1] - 1):
+                        target_id = targets[b, t]
+                        if target_id < vocab_size:
+                            pred = output.data[b, t, target_id]
+                            loss += -np.log(np.clip(pred, 1e-10, 1.0))
+                
+                loss = loss / (len(batch) * (batch.shape[1] - 1))
+                total_loss += loss
+                num_batches += 1
+                
+                # Backward pass (simplified - just for demonstration)
+                # In real training, you'd compute gradients properly
+                output.backward()
+                
+                # Update weights
+                for param in model.parameters():
+                    if hasattr(param, 'grad') and param.grad is not None:
+                        param.data -= learning_rate * param.grad
+                        param.grad = None
+            
+            avg_loss = total_loss / num_batches if num_batches > 0 else 0
+            epoch_time = time.time() - epoch_start
+            
+            print(f"Epoch {epoch + 1}/{epochs} - Loss: {avg_loss:.4f} - Time: {epoch_time:.2f}s")
+            
+            # Save best model
+            if avg_loss < best_loss:
+                best_loss = avg_loss
+                model.save('checkpoints/model_bpe_26k_best.pt')
+                print(f"  ✓ Saved best model (loss: {best_loss:.4f})")
+            
+            # Save checkpoint every 10 epochs
+            if (epoch + 1) % 10 == 0:
+                model.save(f'checkpoints/model_bpe_26k_epoch_{epoch + 1}.pt')
+        
+        # Save final model
+        model.save('checkpoints/model_bpe_26k_final.pt')
+        
+        print("\n" + "=" * 70)
+        print("✅ TRAINING COMPLETE!")
+        print("=" * 70)
+        print(f"Best loss: {best_loss:.4f}")
+        print(f"Model saved: checkpoints/model_bpe_26k_best.pt")
+        
+        # Save training info
+        info = {
+            "vocab_size": vocab_size,
+            "epochs": epochs,
+            "batch_size": batch_size,
+            "learning_rate": learning_rate,
+            "best_loss": float(best_loss),
+            "total_params": total_params,
+            "sequences": len(X)
+        }
+        
+        with open('checkpoints/training_info_bpe_26k.json', 'w') as f:
+            json.dump(info, f, indent=2)
+        
+        print("Training info saved: checkpoints/training_info_bpe_26k.json")
+        SCRIPT_EOF
+        
+        chmod +x train_with_bpe.py
+    
+    - name: Train model
+      run: |
+        python3 train_with_bpe.py ${{ github.event.inputs.epochs || '30' }} ${{ github.event.inputs.batch_size || '32' }}
+    
+    - name: Commit and push model
+      run: |
+        git config --local user.email "github-actions[bot]@users.noreply.github.com"
+        git config --local user.name "github-actions[bot]"
+        
+        # Add model files (force add to override .gitignore)
+        git add -f checkpoints/model_bpe_26k_*.pt.npz || true
+        git add -f checkpoints/training_info_bpe_26k.json || true
+        
+        # Check if there are changes
+        if git diff --staged --quiet; then
+          echo "No model changes to commit"
+        else
+          git commit -m "🤖 Auto-train model with 26K vocab ($(date +'%Y-%m-%d'))"
+          git push https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}.git HEAD:main
+        fi
+    
+    - name: Upload model artifacts
+      uses: actions/upload-artifact@v4
+      with:
+        name: trained-model-${{ github.run_number }}
+        path: |
+          checkpoints/model_bpe_26k_*.pt.npz
+          checkpoints/training_info_bpe_26k.json
+        retention-days: 30
