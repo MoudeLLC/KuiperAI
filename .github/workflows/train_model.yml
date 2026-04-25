@@ -155,73 +155,93 @@ jobs:
         
         best_loss = float('inf')
         
-        for epoch in range(epochs):
-            epoch_start = time.time()
-            
-            # Shuffle data
-            indices = np.random.permutation(len(X))
-            X_shuffled = X[indices]
-            
-            total_loss = 0
-            num_batches = 0
-            
-            # Mini-batch training
-            for i in range(0, len(X_shuffled), batch_size):
-                batch = X_shuffled[i:i + batch_size]
-                if len(batch) < 2:
-                    continue
+        try:
+            for epoch in range(epochs):
+                epoch_start = time.time()
                 
-                # Forward pass
-                output = model.forward(batch)
+                # Shuffle data
+                indices = np.random.permutation(len(X))
+                X_shuffled = X[indices]
                 
-                # Simple loss (cross-entropy approximation)
-                # Target is next token
-                targets = np.roll(batch, -1, axis=1)
+                total_loss = 0
+                num_batches = 0
                 
-                # Calculate loss (simplified with numerical stability)
-                loss = 0.0
-                for b in range(len(batch)):
-                    for t in range(batch.shape[1] - 1):
-                        target_id = targets[b, t]
-                        if target_id < vocab_size:
-                            pred = output.data[b, t, target_id]
-                            # Clip to prevent overflow/underflow
-                            pred = np.clip(pred, 1e-7, 1.0 - 1e-7)
-                            # Use log with safety checks
-                            log_pred = np.log(pred)
-                            # Clip loss to prevent extreme values
-                            loss += -np.clip(log_pred, -10.0, 0.0)
+                # Mini-batch training
+                for i in range(0, len(X_shuffled), batch_size):
+                    batch = X_shuffled[i:i + batch_size]
+                    if len(batch) < 2:
+                        continue
+                    
+                    try:
+                        # Forward pass
+                        output = model.forward(batch)
+                        
+                        # Simple loss (cross-entropy approximation)
+                        # Target is next token
+                        targets = np.roll(batch, -1, axis=1)
+                        
+                        # Calculate loss (simplified with numerical stability)
+                        loss = 0.0
+                        for b in range(len(batch)):
+                            for t in range(batch.shape[1] - 1):
+                                target_id = targets[b, t]
+                                if target_id < vocab_size:
+                                    pred = output.data[b, t, target_id]
+                                    # Clip to prevent overflow/underflow
+                                    pred = np.clip(pred, 1e-7, 1.0 - 1e-7)
+                                    # Use log with safety checks
+                                    log_pred = np.log(pred)
+                                    # Clip loss to prevent extreme values
+                                    loss += -np.clip(log_pred, -10.0, 0.0)
+                        
+                        loss = loss / max(1, len(batch) * (batch.shape[1] - 1))
+                        
+                        # Check for NaN or Inf
+                        if not np.isfinite(loss):
+                            print(f"  ⚠️  Warning: Invalid loss detected, skipping batch")
+                            continue
+                        
+                        total_loss += loss
+                        num_batches += 1
+                        
+                        # Backward pass (simplified - just for demonstration)
+                        # In real training, you'd compute gradients properly
+                        output.backward()
+                        
+                        # Update weights with gradient clipping
+                        for param in model.parameters():
+                            if hasattr(param, 'grad') and param.grad is not None:
+                                # Clip gradients to prevent explosion
+                                grad = np.clip(param.grad, -1.0, 1.0)
+                                param.data -= learning_rate * grad
+                                param.grad = None
+                    
+                    except Exception as e:
+                        print(f"  ⚠️  Error in batch {i}: {str(e)}")
+                        continue
                 
-                loss = loss / max(1, len(batch) * (batch.shape[1] - 1))
-                total_loss += loss
-                num_batches += 1
+                avg_loss = total_loss / num_batches if num_batches > 0 else 0
+                epoch_time = time.time() - epoch_start
                 
-                # Backward pass (simplified - just for demonstration)
-                # In real training, you'd compute gradients properly
-                output.backward()
+                print(f"Epoch {epoch + 1}/{epochs} - Loss: {avg_loss:.4f} - Time: {epoch_time:.2f}s")
                 
-                # Update weights with gradient clipping
-                for param in model.parameters():
-                    if hasattr(param, 'grad') and param.grad is not None:
-                        # Clip gradients to prevent explosion
-                        grad = np.clip(param.grad, -1.0, 1.0)
-                        param.data -= learning_rate * grad
-                        param.grad = None
-            
-            avg_loss = total_loss / num_batches if num_batches > 0 else 0
-            epoch_time = time.time() - epoch_start
-            
-            print(f"Epoch {epoch + 1}/{epochs} - Loss: {avg_loss:.4f} - Time: {epoch_time:.2f}s")
-            
-            # Save best model
-            if avg_loss < best_loss:
-                best_loss = avg_loss
-                model.save('checkpoints/model_bpe_26k_best.pt')
-                print(f"  ✓ Saved best model (loss: {best_loss:.4f})")
-            
-            # Save checkpoint every 10 epochs
-            if (epoch + 1) % 10 == 0:
-                model.save(f'checkpoints/model_bpe_26k_epoch_{epoch + 1}.pt')
+                # Save best model
+                if avg_loss < best_loss and avg_loss > 0:
+                    best_loss = avg_loss
+                    model.save('checkpoints/model_bpe_26k_best.pt')
+                    print(f"  ✓ Saved best model (loss: {best_loss:.4f})")
+                
+                # Save checkpoint every 10 epochs
+                if (epoch + 1) % 10 == 0:
+                    model.save(f'checkpoints/model_bpe_26k_epoch_{epoch + 1}.pt')
+        
+        except KeyboardInterrupt:
+            print("\n⚠️  Training interrupted by user")
+        except Exception as e:
+            print(f"\n❌ Training error: {str(e)}")
+            import traceback
+            traceback.print_exc()
+            sys.exit(1)
         
         # Save final model
         model.save('checkpoints/model_bpe_26k_final.pt')
@@ -253,7 +273,8 @@ jobs:
     
     - name: Train model
       run: |
-        python3 train_with_bpe.py ${{ github.event.inputs.epochs || '30' }} ${{ github.event.inputs.batch_size || '32' }}
+        python3 train_with_bpe.py ${{ github.event.inputs.epochs || '30' }} ${{ github.event.inputs.batch_size || '32' }} 2>&1 | tee training.log
+        exit ${PIPESTATUS[0]}
     
     - name: Commit and push model
       run: |
