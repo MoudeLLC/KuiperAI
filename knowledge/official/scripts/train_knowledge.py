@@ -23,6 +23,7 @@ def main():
     parser.add_argument("--output_dir", type=str, required=True)
     parser.add_argument("--model_name_or_path", type=str, required=True)
     parser.add_argument("--per_device_train_batch_size", type=int, default=32)
+    parser.add_argument("--gradient_accumulation_steps", type=int, default=1)
     parser.add_argument("--learning_rate", type=float, default=2e-5)
     parser.add_argument("--num_train_epochs", type=int, default=3)
     parser.add_argument("--max_seq_length", type=int, default=2048)
@@ -68,6 +69,7 @@ def main():
     training_args = TrainingArguments(
         output_dir=args.output_dir,
         per_device_train_batch_size=args.per_device_train_batch_size,
+        gradient_accumulation_steps=args.gradient_accumulation_steps,
         learning_rate=args.learning_rate,
         num_train_epochs=args.num_train_epochs,
         save_steps=args.save_steps,
