@@ -79,7 +79,6 @@ def main():
         weight_decay=args.weight_decay,
         logging_dir=args.logging_dir,
         report_to=args.report_to,
-        overwrite_output_dir=args.overwrite_output_dir,
     )
     
     data_collator = DataCollatorForLanguageModeling(
