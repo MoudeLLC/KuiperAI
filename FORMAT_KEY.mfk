@@ -1,0 +1,71 @@
+# Moude Format Key (MFK)
+# Copyright © 2024-2026 Moude AI LLC. All Rights Reserved.
+# Format Standard: FnDS/FDS Moude40150
+
+@FnDS.format = {companyNickName}+{companyIdentifierCode}
+
+@ModelName.format = {mainName}-{productionSerieLetter}+{serieVersionNum.noneDec}-{contextSizeOnlyNum.biggestPlaceValue}+{biteValue.firstLetter.lowerCase}
+@ModelName.variables = {mainName}.{productionSerieLetter}.{serieVersionNum.noneDec}.{contextSizeOnlyNum.biggestPlaceValue}.{biteValue.firstLetter.lowerCase}
+
+@ModelNickname.format = {productionSerieLetter}+{serieVersionNum.noneDec}-{contextSizeOnlyNum.biggestPlaceValue}+{biteValue.firstLetter.lowerCase}
+@ModelNickname.variables = {productionSerieLetter}.{serieVersionNum.noneDec}.{contextSizeOnlyNum.biggestPlaceValue}.{biteValue.firstLetter.lowerCase}
+
+@SeriesIdentifier.format = {productionSerieLetter}+{serieVersionNum.noneDec}
+@SeriesIdentifier.variables = {productionSerieLetter}.{serieVersionNum.noneDec}
+
+@Context.format = {contextLength}
+@Context.variables = {contextLength}
+
+@ContextSubstr.format = {contextSizeOnlyNum.biggestPlaceValue}+{biteValue.firstLetter.lowerCase}
+@ContextSubstr.variables = {contextSizeOnlyNum.biggestPlaceValue}.{biteValue.firstLetter.lowerCase}
+
+@MMI.format = {GMIC}+{modelName.firstLetter}+{GAID}+A+{MDD.A.uppercase}+I+{MDD.I.uppercase}
+@MMI.variables = {GMIC}.{modelName.firstLetter}.{GAID}.{MDD.A.uppercase}.{MDD.I.uppercase}
+@MMI.components.GMIC = 4digit
+@MMI.components.modelName.firstLetter = 1char.uppercase
+@MMI.components.GAID = 4digit.leadingZerosRemovedInMMI
+@MMI.components.A = required
+@MMI.components.MDD.A.uppercase = 2digit
+@MMI.components.I = required
+@MMI.components.MDD.I.uppercase = 2digit
+
+@GAID.format = {NNNN}
+@GAID.storage = 4digit.withLeadingZeros
+@GAID.mmi = 4digit.leadingZerosRemoved
+@GAID.purpose = providerClientModelLookup
+@GAID.creator = MoudeAI
+
+@GMIC.format = {NNNN}
+@GMIC.purpose = modelTypeIdentifier
+@GMIC.length = 4digit
+
+@MDD.format = {NN}
+@MDD.purpose = characterToDecimalMapping
+@MDD.length = 2digit
+@MDD.scope = uppercaseLetters
+
+@Metadata.company_name = {CompanyName}
+@Metadata.model_base_name = {ModelBaseName}
+@Metadata.model_name = {ModelName}-{X}+{N}-{N}+{unit}
+@Metadata.model_nickname = {X}+{N}-{N}+{unit}
+@Metadata.series_identifier = {X}+{N}
+@Metadata.mmi = {NNNN}+{X}+{NNNN}+A+{NN}+I+{NN}
+@Metadata.gaid = {NNNN}
+@Metadata.version = {major}.{minor}.{patch}
+@Metadata.context = {contextLength}
+@Metadata.context_substr = {N}+{unit}
+@Metadata.total_parameters = {parameterCount}
+@Metadata.architecture = {architectureType}
+@Metadata.copyright = {copyrightInfo}
+@Metadata.license = {licenseType}
+
+@Rules.seriesLetter = uppercase
+@Rules.biteValueLetter = lowercase
+@Rules.separator = hyphen
+@Rules.noSpaces = true
+@Rules.gaidStorage = 4digit.withLeadingZeros
+@Rules.gaidMMI = leadingZerosRemoved
+@Rules.mddLength = 2digit
+@Rules.mmiRequired = A.I
+
+# End of Moude Format Key

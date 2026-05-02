@@ -1,0 +1,9 @@
+{companyNickName}{companyIdentifierCode}
+{mainName}-{productionSerieLetter}{serieVersionNum.noneDec}-{contextSizeOnlyNum.biggestPlaceValue}{biteValue.firstLetter.lowerCase}
+{productionSerieLetter}{serieVersionNum.noneDec}-{contextSizeOnlyNum.biggestPlaceValue}{biteValue.firstLetter.lowerCase}
+{productionSerieLetter}{serieVersionNum.noneDec}
+{contextLength}
+{contextSizeOnlyNum.biggestPlaceValue}{biteValue.firstLetter.lowerCase}
+{GMIC}{modelName.firstLetter}{GAID}A{MDD.A.uppercase}I{MDD.I.uppercase}
+{NNNN}
+{NN}
