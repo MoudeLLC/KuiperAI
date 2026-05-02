@@ -1,0 +1,186 @@
+KuiperAI Proprietary License
+Copyright © 2024-2026 Moude AI LLC. All Rights Reserved.
+
+================================================================================
+KUIPERAI MODEL AND SOFTWARE LICENSE AGREEMENT
+================================================================================
+
+This License Agreement ("Agreement") is a legal agreement between you (either an
+individual or a single entity, "Licensee") and Moude AI LLC ("Licensor") for the
+KuiperAI artificial intelligence model, software, and associated documentation
+(collectively, the "Software").
+
+BY USING, COPYING, OR DISTRIBUTING THE SOFTWARE, YOU AGREE TO BE BOUND BY THE
+TERMS OF THIS AGREEMENT. IF YOU DO NOT AGREE, DO NOT USE THE SOFTWARE.
+
+================================================================================
+1. GRANT OF LICENSE
+================================================================================
+
+Subject to the terms and conditions of this Agreement, Licensor grants Licensee
+a limited, non-exclusive, non-transferable, revocable license to:
+
+(a) Use the Software solely through official KuiperAI applications and interfaces
+    provided by Licensor;
+(b) Access the Software for personal or internal business purposes only;
+(c) Use the Software in accordance with any documentation provided by Licensor.
+
+================================================================================
+2. RESTRICTIONS
+================================================================================
+
+Licensee shall NOT:
+
+(a) Modify, adapt, translate, reverse engineer, decompile, disassemble, or
+    create derivative works based on the Software or any part thereof;
+(b) Redistribute, sublicense, rent, lease, loan, or otherwise transfer the
+    Software to any third party;
+(c) Remove, alter, or obscure any proprietary notices (including copyright and
+    trademark notices) on the Software;
+(d) Use the Software to develop competing products or services;
+(e) Extract, copy, or replicate the model weights, architecture details, or
+    training data;
+(f) Attempt to access the Software through unauthorized means or bypass any
+    access controls;
+(g) Use the Software for any illegal, harmful, or unethical purposes;
+(h) Benchmark, test, or analyze the Software for competitive purposes without
+    prior written consent from Licensor.
+
+================================================================================
+3. OWNERSHIP AND INTELLECTUAL PROPERTY
+================================================================================
+
+(a) The Software, including all intellectual property rights therein, is and
+    shall remain the exclusive property of Licensor.
+(b) This Agreement does not grant Licensee any ownership rights in the Software.
+(c) All rights not expressly granted herein are reserved by Licensor.
+(d) The KuiperAI name, logo, and trademarks are the property of Moude AI LLC
+    and may not be used without prior written permission.
+
+================================================================================
+4. CONFIDENTIALITY
+================================================================================
+
+(a) The Software contains proprietary and confidential information of Licensor.
+(b) Licensee agrees to maintain the confidentiality of the Software and not
+    disclose any technical details, architecture, or implementation to third
+    parties.
+(c) This obligation survives termination of this Agreement.
+
+================================================================================
+5. COMMERCIAL USE AND LICENSING
+================================================================================
+
+(a) Commercial use of the Software requires a separate commercial license
+    agreement with Licensor.
+(b) For commercial licensing inquiries, contact: licensing@moude.ai
+(c) Unauthorized commercial use is strictly prohibited and may result in legal
+    action.
+
+================================================================================
+6. DATA AND PRIVACY
+================================================================================
+
+(a) Licensee acknowledges that interactions with the Software may be logged and
+    analyzed for improvement purposes.
+(b) Licensee agrees to comply with all applicable data protection and privacy
+    laws when using the Software.
+(c) Licensor's Privacy Policy governs the collection and use of data.
+
+================================================================================
+7. DISCLAIMER OF WARRANTIES
+================================================================================
+
+THE SOFTWARE IS PROVIDED "AS IS" WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS
+FOR A PARTICULAR PURPOSE, AND NONINFRINGEMENT.
+
+LICENSOR DOES NOT WARRANT THAT:
+(a) The Software will meet Licensee's requirements;
+(b) The Software will be uninterrupted, timely, secure, or error-free;
+(c) The results obtained from the use of the Software will be accurate or
+    reliable;
+(d) Any errors in the Software will be corrected.
+
+================================================================================
+8. LIMITATION OF LIABILITY
+================================================================================
+
+TO THE MAXIMUM EXTENT PERMITTED BY APPLICABLE LAW, IN NO EVENT SHALL LICENSOR
+BE LIABLE FOR ANY SPECIAL, INCIDENTAL, INDIRECT, OR CONSEQUENTIAL DAMAGES
+WHATSOEVER (INCLUDING, WITHOUT LIMITATION, DAMAGES FOR LOSS OF BUSINESS PROFITS,
+BUSINESS INTERRUPTION, LOSS OF BUSINESS INFORMATION, OR ANY OTHER PECUNIARY
+LOSS) ARISING OUT OF THE USE OF OR INABILITY TO USE THE SOFTWARE, EVEN IF
+LICENSOR HAS BEEN ADVISED OF THE POSSIBILITY OF SUCH DAMAGES.
+
+LICENSOR'S TOTAL LIABILITY UNDER THIS AGREEMENT SHALL NOT EXCEED THE AMOUNT
+PAID BY LICENSEE FOR THE SOFTWARE, IF ANY.
+
+================================================================================
+9. TERMINATION
+================================================================================
+
+(a) This Agreement is effective until terminated.
+(b) Licensor may terminate this Agreement immediately if Licensee breaches any
+    term of this Agreement.
+(c) Upon termination, Licensee must cease all use of the Software and destroy
+    all copies in their possession.
+(d) Sections 2, 3, 4, 7, 8, 10, and 11 survive termination.
+
+================================================================================
+10. EXPORT COMPLIANCE
+================================================================================
+
+Licensee agrees to comply with all applicable export and import laws and
+regulations. Licensee shall not export or re-export the Software to any country,
+person, or entity subject to trade restrictions or embargoes.
+
+================================================================================
+11. GENERAL PROVISIONS
+================================================================================
+
+(a) Governing Law: This Agreement shall be governed by and construed in
+    accordance with the laws of [Your Jurisdiction], without regard to its
+    conflict of law provisions.
+
+(b) Entire Agreement: This Agreement constitutes the entire agreement between
+    the parties concerning the Software and supersedes all prior agreements and
+    understandings.
+
+(c) Amendments: Licensor reserves the right to modify this Agreement at any
+    time. Continued use of the Software after modifications constitutes
+    acceptance of the modified terms.
+
+(d) Severability: If any provision of this Agreement is held to be unenforceable,
+    the remaining provisions shall remain in full force and effect.
+
+(e) Waiver: No waiver of any provision of this Agreement shall be deemed or
+    shall constitute a waiver of any other provision.
+
+(f) Assignment: Licensee may not assign this Agreement without prior written
+    consent of Licensor.
+
+================================================================================
+12. CONTACT INFORMATION
+================================================================================
+
+For questions about this License Agreement or to request permissions:
+
+Moude AI LLC
+Email: legal@moude.ai
+Website: https://moude.ai
+
+For commercial licensing inquiries:
+Email: licensing@moude.ai
+
+================================================================================
+13. ACKNOWLEDGMENT
+================================================================================
+
+BY USING THE SOFTWARE, LICENSEE ACKNOWLEDGES THAT THEY HAVE READ THIS AGREEMENT,
+UNDERSTAND IT, AND AGREE TO BE BOUND BY ITS TERMS AND CONDITIONS.
+
+================================================================================
+
+KuiperAI is a trademark of Moude AI LLC.
+All rights reserved.
