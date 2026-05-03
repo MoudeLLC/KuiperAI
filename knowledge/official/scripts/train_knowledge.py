@@ -235,7 +235,7 @@ def train_with_pytorch(args):
         logging_steps=args.logging_steps,
         save_steps=args.save_steps,
         save_total_limit=args.save_total_limit,
-        evaluation_strategy=args.evaluation_strategy,
+        eval_strategy=args.evaluation_strategy,
         eval_steps=args.eval_steps,
         fp16=args.fp16,
         bf16=args.bf16,
@@ -257,8 +257,9 @@ def train_with_pytorch(args):
         adam_beta1=args.adam_beta1,
         adam_beta2=args.adam_beta2,
         adam_epsilon=args.adam_epsilon,
-        log_level=args.log_level,
-        ignore_data_skip=args.ignore_data_skip,
+        logging_first_step=True,
+        save_safetensors=True,
+        remove_unused_columns=True,
     )
     
     data_collator = DataCollatorForLanguageModeling(
