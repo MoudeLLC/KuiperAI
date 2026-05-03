@@ -182,52 +182,123 @@ def train_with_pytorch(args):
     if device == "cuda":
         print(f"GPU count: {torch.cuda.device_count()}")
         for i in range(torch.cuda.device_count()):
+            gpu_props = torch.cuda.get_device_properties(i)
             print(f"  GPU {i}: {torch.cuda.get_device_name(i)}")
+            print(f"    Memory: {gpu_props.total_memory / 1024**3:.2f} GB")
+            print(f"    Compute Capability: {gpu_props.major}.{gpu_props.minor}")
     
+    # Determine dtype based on mixed precision settings
+    if args.bf16:
+        torch_dtype = torch.bfloat16
+        print("Using BF16 mixed precision")
+    elif args.fp16:
+        torch_dtype = torch.float16
+        print("Using FP16 mixed precision")
+    else:
+        torch_dtype = torch.float32
+        print("Using FP32 (full precision)")
+    
+    print(f"Loading tokenizer from: {args.model_name_or_path}")
     tokenizer = AutoTokenizer.from_pretrained(args.model_name_or_path)
-    model = AutoModelForCausalLM.from_pretrained(
-        args.model_name_or_path,
-        torch_dtype=torch.float16 if args.fp16 else torch.float32,
-        device_map="auto" if torch.cuda.is_available() else None
-    )
+    
+    print(f"Loading model from: {args.model_name_or_path}")
+    print("Note: This model has random weights and needs pretraining")
+    
+    try:
+        model = AutoModelForCausalLM.from_pretrained(
+            args.model_name_or_path,
+            torch_dtype=torch_dtype,
+            device_map="auto" if torch.cuda.is_available() and torch.cuda.device_count() > 1 else None,
+            low_cpu_mem_usage=True
+        )
+        print(f"✓ Model loaded successfully")
+        print(f"  Total parameters: {sum(p.numel() for p in model.parameters()):,}")
+        print(f"  Trainable parameters: {sum(p.numel() for p in model.parameters() if p.requires_grad):,}")
+    except Exception as e:
+        print(f"✗ Error loading model: {e}")
+        print("Attempting to load with reduced memory usage...")
+        model = AutoModelForCausalLM.from_pretrained(
+            args.model_name_or_path,
+            torch_dtype=torch_dtype,
+            low_cpu_mem_usage=True
+        )
+        if torch.cuda.is_available():
+            model = model.to(device)
     
     if tokenizer.pad_token is None:
         tokenizer.pad_token = tokenizer.eos_token
+        print(f"Set pad_token to eos_token: {tokenizer.eos_token}")
     
     print("Loading dataset...")
-    dataset = load_dataset("text", data_files={"train": args.train_file})
+    print(f"  Dataset file: {args.train_file}")
+    
+    try:
+        dataset = load_dataset("text", data_files={"train": args.train_file})
+        print(f"✓ Dataset loaded: {len(dataset['train']):,} examples")
+    except Exception as e:
+        print(f"✗ Error loading dataset: {e}")
+        raise
     
     # Load evaluation dataset if provided
     eval_dataset = None
     if args.eval_file and args.do_eval:
         print("Loading evaluation dataset...")
-        eval_data = load_dataset("text", data_files={"validation": args.eval_file})
-        eval_dataset = eval_data["validation"]
+        try:
+            eval_data = load_dataset("text", data_files={"validation": args.eval_file})
+            eval_dataset = eval_data["validation"]
+            print(f"✓ Evaluation dataset loaded: {len(eval_dataset):,} examples")
+        except Exception as e:
+            print(f"⚠ Warning: Could not load evaluation dataset: {e}")
+            print("  Continuing without evaluation")
     
     def tokenize_function(examples):
         return tokenizer(
             examples["text"],
             truncation=True,
             max_length=args.max_seq_length,
-            padding="max_length"
+            padding="max_length",
+            return_tensors=None
         )
     
     print("Tokenizing dataset...")
-    tokenized_dataset = dataset.map(
-        tokenize_function,
-        batched=True,
-        remove_columns=dataset["train"].column_names
-    )
+    print(f"  Max sequence length: {args.max_seq_length}")
+    print("  This may take several minutes for large datasets...")
+    
+    try:
+        tokenized_dataset = dataset.map(
+            tokenize_function,
+            batched=True,
+            remove_columns=dataset["train"].column_names,
+            desc="Tokenizing training data"
+        )
+        print(f"✓ Tokenization complete")
+    except Exception as e:
+        print(f"✗ Error during tokenization: {e}")
+        raise
     
     # Tokenize evaluation dataset if provided
     tokenized_eval_dataset = None
     if eval_dataset:
         print("Tokenizing evaluation dataset...")
-        tokenized_eval_dataset = eval_dataset.map(
-            tokenize_function,
-            batched=True,
-            remove_columns=eval_dataset.column_names
-        )
+        try:
+            tokenized_eval_dataset = eval_dataset.map(
+                tokenize_function,
+                batched=True,
+                remove_columns=eval_dataset.column_names,
+                desc="Tokenizing evaluation data"
+            )
+            print(f"✓ Evaluation tokenization complete")
+        except Exception as e:
+            print(f"⚠ Warning: Could not tokenize evaluation dataset: {e}")
+            tokenized_eval_dataset = None
+    
+    print("\nPreparing training configuration...")
+    
+    # Calculate total training steps
+    total_steps = (len(tokenized_dataset["train"]) // (args.per_device_train_batch_size * args.gradient_accumulation_steps * max(1, torch.cuda.device_count()))) * args.num_train_epochs
+    print(f"  Total training steps: {total_steps:,}")
+    print(f"  Warmup steps: {args.warmup_steps}")
+    print(f"  Effective batch size: {args.per_device_train_batch_size * args.gradient_accumulation_steps * max(1, torch.cuda.device_count())}")
     
     training_args = TrainingArguments(
         output_dir=args.output_dir,
@@ -238,6 +309,7 @@ def train_with_pytorch(args):
         num_train_epochs=args.num_train_epochs,
         max_steps=args.max_steps,
         warmup_steps=args.warmup_steps,
+        warmup_ratio=args.warmup_ratio,
         weight_decay=args.weight_decay,
         logging_dir=args.logging_dir,
         logging_steps=args.logging_steps,
@@ -245,8 +317,10 @@ def train_with_pytorch(args):
         save_total_limit=args.save_total_limit,
         fp16=args.fp16,
         bf16=args.bf16,
+        fp16_opt_level=args.fp16_opt_level if args.fp16 else None,
         dataloader_num_workers=args.dataloader_num_workers,
         dataloader_pin_memory=args.dataloader_pin_memory,
+        dataloader_drop_last=args.dataloader_drop_last,
         report_to=args.report_to,
         seed=args.seed,
         disable_tqdm=args.disable_tqdm,
@@ -254,17 +328,52 @@ def train_with_pytorch(args):
         adam_beta1=args.adam_beta1,
         adam_beta2=args.adam_beta2,
         adam_epsilon=args.adam_epsilon,
+        max_grad_norm=args.max_grad_norm,
+        lr_scheduler_type=args.lr_scheduler_type,
+        save_strategy="steps",
+        evaluation_strategy=args.evaluation_strategy if tokenized_eval_dataset else "no",
+        eval_steps=args.eval_steps if tokenized_eval_dataset else None,
+        load_best_model_at_end=args.load_best_model_at_end if tokenized_eval_dataset else False,
+        metric_for_best_model=args.metric_for_best_model,
+        greater_is_better=args.greater_is_better,
+        ddp_find_unused_parameters=args.ddp_find_unused_parameters if args.local_rank != -1 else None,
+        dataloader_prefetch_factor=args.dataloader_prefetch_factor if args.dataloader_num_workers > 0 else None,
     )
+    
+    print("\nTraining configuration:")
+    print(f"  Output directory: {args.output_dir}")
+    print(f"  Batch size per device: {args.per_device_train_batch_size}")
+    print(f"  Gradient accumulation: {args.gradient_accumulation_steps}")
+    print(f"  Learning rate: {args.learning_rate}")
+    print(f"  Epochs: {args.num_train_epochs}")
+    print(f"  Mixed precision: {'BF16' if args.bf16 else 'FP16' if args.fp16 else 'FP32'}")
+    print(f"  Gradient checkpointing: {args.gradient_checkpointing}")
+    print(f"  LR scheduler: {args.lr_scheduler_type}")
     
     # Enable gradient checkpointing if requested
     if args.gradient_checkpointing:
-        model.gradient_checkpointing_enable()
+        print("\nEnabling gradient checkpointing...")
+        try:
+            model.gradient_checkpointing_enable()
+            print("✓ Gradient checkpointing enabled")
+        except Exception as e:
+            print(f"⚠ Warning: Could not enable gradient checkpointing: {e}")
+    
+    # Print memory usage before training
+    if torch.cuda.is_available():
+        print("\nGPU Memory Status (before training):")
+        for i in range(torch.cuda.device_count()):
+            allocated = torch.cuda.memory_allocated(i) / 1024**3
+            reserved = torch.cuda.memory_reserved(i) / 1024**3
+            total = torch.cuda.get_device_properties(i).total_memory / 1024**3
+            print(f"  GPU {i}: {allocated:.2f}GB allocated, {reserved:.2f}GB reserved, {total:.2f}GB total")
     
     data_collator = DataCollatorForLanguageModeling(
         tokenizer=tokenizer,
         mlm=False
     )
     
+    print("\nInitializing Trainer...")
     trainer = Trainer(
         model=model,
         args=training_args,
@@ -273,18 +382,87 @@ def train_with_pytorch(args):
         data_collator=data_collator,
     )
     
-    print("Starting training (PyTorch)...")
-    if args.resume_from_checkpoint:
-        print(f"Resuming from checkpoint: {args.resume_from_checkpoint}")
-        trainer.train(resume_from_checkpoint=args.resume_from_checkpoint)
-    else:
-        trainer.train()
+    print("\n" + "="*70)
+    print("STARTING TRAINING")
+    print("="*70)
+    print(f"Training from: {'checkpoint' if args.resume_from_checkpoint else 'scratch (random weights)'}")
+    print(f"Dataset: {len(tokenized_dataset['train']):,} examples")
+    print(f"This is PRETRAINING - the model will learn language from scratch")
+    print("="*70 + "\n")
     
-    print("Saving final model...")
-    trainer.save_model(args.output_dir)
-    tokenizer.save_pretrained(args.output_dir)
+    try:
+        if args.resume_from_checkpoint:
+            print(f"Resuming from checkpoint: {args.resume_from_checkpoint}")
+            trainer.train(resume_from_checkpoint=args.resume_from_checkpoint)
+        else:
+            trainer.train()
+        
+        print("\n" + "="*70)
+        print("TRAINING COMPLETED SUCCESSFULLY")
+        print("="*70)
+        
+    except KeyboardInterrupt:
+        print("\n\n⚠ Training interrupted by user")
+        print("Saving current state...")
+        trainer.save_model(args.output_dir + "/interrupted")
+        print(f"Model saved to: {args.output_dir}/interrupted")
+        raise
+        
+    except Exception as e:
+        print(f"\n\n✗ Training failed with error: {e}")
+        print("Attempting to save current state...")
+        try:
+            trainer.save_model(args.output_dir + "/failed")
+            print(f"Model saved to: {args.output_dir}/failed")
+        except:
+            print("Could not save model")
+        raise
     
-    print("Training complete!")
+    print("\nSaving final model...")
+    try:
+        trainer.save_model(args.output_dir)
+        tokenizer.save_pretrained(args.output_dir)
+        print(f"✓ Model saved to: {args.output_dir}")
+        
+        # Save training stats
+        import json
+        stats = {
+            "total_steps": trainer.state.global_step,
+            "total_epochs": args.num_train_epochs,
+            "final_loss": trainer.state.log_history[-1].get("loss", None) if trainer.state.log_history else None,
+            "model_name": args.model_name_or_path,
+            "training_args": {
+                "batch_size": args.per_device_train_batch_size,
+                "learning_rate": args.learning_rate,
+                "max_seq_length": args.max_seq_length,
+                "mixed_precision": "bf16" if args.bf16 else "fp16" if args.fp16 else "fp32"
+            }
+        }
+        with open(f"{args.output_dir}/training_stats.json", "w") as f:
+            json.dump(stats, f, indent=2)
+        print(f"✓ Training stats saved to: {args.output_dir}/training_stats.json")
+        
+    except Exception as e:
+        print(f"⚠ Warning: Error saving model: {e}")
+    
+    # Print final memory usage
+    if torch.cuda.is_available():
+        print("\nGPU Memory Status (after training):")
+        for i in range(torch.cuda.device_count()):
+            allocated = torch.cuda.memory_allocated(i) / 1024**3
+            reserved = torch.cuda.memory_reserved(i) / 1024**3
+            total = torch.cuda.get_device_properties(i).total_memory / 1024**3
+            print(f"  GPU {i}: {allocated:.2f}GB allocated, {reserved:.2f}GB reserved, {total:.2f}GB total")
+    
+    print("\n" + "="*70)
+    print("PRETRAINING COMPLETE!")
+    print("="*70)
+    print(f"Model location: {args.output_dir}")
+    print("Next steps:")
+    print("  1. Evaluate the pretrained model")
+    print("  2. Fine-tune on instruction data (OpenHermes)")
+    print("  3. Test with chat interface")
+    print("="*70 + "\n")
 
 def train_with_jax(args):
     """Training with JAX/Flax (for TPU)"""
