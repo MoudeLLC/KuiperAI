@@ -97,6 +97,7 @@ def main():
     parser.add_argument("--logging_steps", type=int, default=100)
     parser.add_argument("--save_total_limit", type=int, default=3)
     parser.add_argument("--fp16", action="store_true")
+    parser.add_argument("--bf16", action="store_true")
     parser.add_argument("--gradient_checkpointing", action="store_true")
     parser.add_argument("--warmup_steps", type=int, default=500)
     parser.add_argument("--weight_decay", type=float, default=0.01)
@@ -162,6 +163,7 @@ def train_with_pytorch(args):
         logging_steps=args.logging_steps,
         save_total_limit=args.save_total_limit,
         fp16=args.fp16,
+        bf16=args.bf16,
         gradient_checkpointing=args.gradient_checkpointing,
         warmup_steps=args.warmup_steps,
         weight_decay=args.weight_decay,
