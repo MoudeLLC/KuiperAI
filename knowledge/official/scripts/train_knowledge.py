@@ -85,26 +85,85 @@ else:
 
 def main():
     parser = argparse.ArgumentParser(description="KuiperAI Knowledge Trainer")
-    parser.add_argument("--train_file", type=str, required=True)
-    parser.add_argument("--output_dir", type=str, required=True)
-    parser.add_argument("--model_name_or_path", type=str, required=True)
-    parser.add_argument("--per_device_train_batch_size", type=int, default=32)
-    parser.add_argument("--gradient_accumulation_steps", type=int, default=1)
-    parser.add_argument("--learning_rate", type=float, default=2e-5)
-    parser.add_argument("--num_train_epochs", type=int, default=3)
-    parser.add_argument("--max_seq_length", type=int, default=512)
-    parser.add_argument("--save_steps", type=int, default=500)
-    parser.add_argument("--logging_steps", type=int, default=100)
-    parser.add_argument("--save_total_limit", type=int, default=3)
-    parser.add_argument("--fp16", action="store_true")
-    parser.add_argument("--bf16", action="store_true")
-    parser.add_argument("--gradient_checkpointing", action="store_true")
-    parser.add_argument("--warmup_steps", type=int, default=500)
-    parser.add_argument("--weight_decay", type=float, default=0.01)
-    parser.add_argument("--logging_dir", type=str, default=None)
-    parser.add_argument("--report_to", type=str, default="tensorboard")
-    parser.add_argument("--do_train", action="store_true")
-    parser.add_argument("--overwrite_output_dir", action="store_true")
+    
+    # Required arguments
+    parser.add_argument("--train_file", type=str, required=True, help="Path to training data file")
+    parser.add_argument("--output_dir", type=str, required=True, help="Output directory for model checkpoints")
+    parser.add_argument("--model_name_or_path", type=str, required=True, help="Path to pretrained model or model identifier")
+    
+    # Basic training arguments
+    parser.add_argument("--per_device_train_batch_size", type=int, default=32, help="Batch size per device during training")
+    parser.add_argument("--gradient_accumulation_steps", type=int, default=1, help="Number of updates steps to accumulate before performing a backward/update pass")
+    parser.add_argument("--learning_rate", type=float, default=2e-5, help="Initial learning rate")
+    parser.add_argument("--num_train_epochs", type=int, default=3, help="Total number of training epochs")
+    parser.add_argument("--max_seq_length", type=int, default=512, help="Maximum sequence length")
+    
+    # Checkpoint and logging
+    parser.add_argument("--save_steps", type=int, default=500, help="Save checkpoint every X steps")
+    parser.add_argument("--logging_steps", type=int, default=100, help="Log every X steps")
+    parser.add_argument("--save_total_limit", type=int, default=3, help="Maximum number of checkpoints to keep")
+    parser.add_argument("--logging_dir", type=str, default=None, help="TensorBoard log directory")
+    parser.add_argument("--report_to", type=str, default="tensorboard", help="Reporting integration (tensorboard, wandb, none)")
+    
+    # Mixed precision training
+    parser.add_argument("--fp16", action="store_true", help="Use FP16 mixed precision training")
+    parser.add_argument("--bf16", action="store_true", help="Use BF16 mixed precision training")
+    parser.add_argument("--fp16_opt_level", type=str, default="O1", help="FP16 optimization level (O0, O1, O2, O3)")
+    parser.add_argument("--fp16_backend", type=str, default="auto", help="FP16 backend (auto, apex, cpu_amp)")
+    parser.add_argument("--half_precision_backend", type=str, default="auto", help="Half precision backend")
+    
+    # Memory optimization
+    parser.add_argument("--gradient_checkpointing", action="store_true", help="Enable gradient checkpointing to save memory")
+    parser.add_argument("--max_grad_norm", type=float, default=1.0, help="Maximum gradient norm for clipping")
+    parser.add_argument("--dataloader_num_workers", type=int, default=0, help="Number of subprocesses for data loading")
+    parser.add_argument("--dataloader_pin_memory", action="store_true", help="Pin memory in data loaders")
+    parser.add_argument("--dataloader_drop_last", action="store_true", help="Drop the last incomplete batch")
+    
+    # Optimizer arguments
+    parser.add_argument("--warmup_steps", type=int, default=500, help="Number of warmup steps")
+    parser.add_argument("--warmup_ratio", type=float, default=0.0, help="Ratio of warmup steps to total steps")
+    parser.add_argument("--weight_decay", type=float, default=0.01, help="Weight decay")
+    parser.add_argument("--adam_beta1", type=float, default=0.9, help="Adam beta1")
+    parser.add_argument("--adam_beta2", type=float, default=0.999, help="Adam beta2")
+    parser.add_argument("--adam_epsilon", type=float, default=1e-8, help="Adam epsilon")
+    parser.add_argument("--max_steps", type=int, default=-1, help="Maximum number of training steps (overrides num_train_epochs)")
+    parser.add_argument("--lr_scheduler_type", type=str, default="linear", help="Learning rate scheduler type")
+    
+    # Advanced training options
+    parser.add_argument("--seed", type=int, default=42, help="Random seed for reproducibility")
+    parser.add_argument("--local_rank", type=int, default=-1, help="Local rank for distributed training")
+    parser.add_argument("--ddp_backend", type=str, default=None, help="Distributed backend (nccl, gloo, mpi)")
+    parser.add_argument("--ddp_find_unused_parameters", action="store_true", help="Find unused parameters in DDP")
+    parser.add_argument("--dataloader_prefetch_factor", type=int, default=2, help="Number of batches to prefetch")
+    
+    # Evaluation and validation
+    parser.add_argument("--eval_steps", type=int, default=None, help="Run evaluation every X steps")
+    parser.add_argument("--eval_file", type=str, default=None, help="Path to evaluation data file")
+    parser.add_argument("--do_eval", action="store_true", help="Run evaluation during training")
+    parser.add_argument("--evaluation_strategy", type=str, default="no", help="Evaluation strategy (no, steps, epoch)")
+    parser.add_argument("--per_device_eval_batch_size", type=int, default=8, help="Batch size per device for evaluation")
+    
+    # Model loading options
+    parser.add_argument("--resume_from_checkpoint", type=str, default=None, help="Resume training from checkpoint")
+    parser.add_argument("--ignore_data_skip", action="store_true", help="Skip data that was already processed in resumed training")
+    
+    # Special options
+    parser.add_argument("--do_train", action="store_true", help="Run training")
+    parser.add_argument("--overwrite_output_dir", action="store_true", help="Overwrite output directory if it exists")
+    parser.add_argument("--disable_tqdm", action="store_true", help="Disable tqdm progress bars")
+    parser.add_argument("--load_best_model_at_end", action="store_true", help="Load best model at end of training")
+    parser.add_argument("--metric_for_best_model", type=str, default=None, help="Metric to use for best model selection")
+    parser.add_argument("--greater_is_better", action="store_true", help="Whether better metric values are higher")
+    parser.add_argument("--push_to_hub", action="store_true", help="Push model to Hugging Face Hub")
+    parser.add_argument("--hub_model_id", type=str, default=None, help="Model ID for Hugging Face Hub")
+    parser.add_argument("--hub_token", type=str, default=None, help="Token for Hugging Face Hub")
+    
+    # Debug options
+    parser.add_argument("--debug_mode", action="store_true", help="Enable debug mode with extra logging")
+    parser.add_argument("--log_level", type=str, default="info", help="Logging level (debug, info, warning, error)")
+    parser.add_argument("--sharded_ddp", type=str, default="", help="Sharded DDP options")
+    parser.add_argument("--fsdp", type=str, default="", help="Fully Sharded Data Parallel options")
+    parser.add_argument("--deepspeed", type=str, default=None, help="DeepSpeed config file path")
     
     args = parser.parse_args()
     
@@ -138,6 +197,13 @@ def train_with_pytorch(args):
     print("Loading dataset...")
     dataset = load_dataset("text", data_files={"train": args.train_file})
     
+    # Load evaluation dataset if provided
+    eval_dataset = None
+    if args.eval_file and args.do_eval:
+        print("Loading evaluation dataset...")
+        eval_data = load_dataset("text", data_files={"validation": args.eval_file})
+        eval_dataset = eval_data["validation"]
+    
     def tokenize_function(examples):
         return tokenizer(
             examples["text"],
@@ -155,25 +221,55 @@ def train_with_pytorch(args):
     
     training_args = TrainingArguments(
         output_dir=args.output_dir,
+        overwrite_output_dir=args.overwrite_output_dir,
         per_device_train_batch_size=args.per_device_train_batch_size,
+        per_device_eval_batch_size=args.per_device_eval_batch_size,
         gradient_accumulation_steps=args.gradient_accumulation_steps,
         learning_rate=args.learning_rate,
         num_train_epochs=args.num_train_epochs,
-        save_steps=args.save_steps,
-        logging_steps=args.logging_steps,
-        save_total_limit=args.save_total_limit,
-        fp16=args.fp16,
-        bf16=args.bf16,
-        gradient_checkpointing=args.gradient_checkpointing,
+        max_steps=args.max_steps,
+        lr_scheduler_type=args.lr_scheduler_type,
         warmup_steps=args.warmup_steps,
+        warmup_ratio=args.warmup_ratio,
         weight_decay=args.weight_decay,
         logging_dir=args.logging_dir,
+        logging_steps=args.logging_steps,
+        save_steps=args.save_steps,
+        save_total_limit=args.save_total_limit,
+        evaluation_strategy=args.evaluation_strategy,
+        eval_steps=args.eval_steps,
+        fp16=args.fp16,
+        bf16=args.bf16,
+        fp16_opt_level=args.fp16_opt_level,
+        fp16_backend=args.fp16_backend,
+        half_precision_backend=args.half_precision_backend,
+        gradient_checkpointing=args.gradient_checkpointing,
+        max_grad_norm=args.max_grad_norm,
+        dataloader_num_workers=args.dataloader_num_workers,
+        dataloader_pin_memory=args.dataloader_pin_memory,
+        dataloader_drop_last=args.dataloader_drop_last,
+        dataloader_prefetch_factor=args.dataloader_prefetch_factor if args.dataloader_num_workers > 0 else None,
         report_to=args.report_to,
+        seed=args.seed,
+        local_rank=args.local_rank,
+        ddp_backend=args.ddp_backend,
+        ddp_find_unused_parameters=args.ddp_find_unused_parameters,
+        load_best_model_at_end=args.load_best_model_at_end,
+        metric_for_best_model=args.metric_for_best_model,
+        greater_is_better=args.greater_is_better,
+        disable_tqdm=args.disable_tqdm,
+        push_to_hub=args.push_to_hub,
+        hub_model_id=args.hub_model_id,
+        hub_token=args.hub_token,
+        sharded_ddp=args.sharded_ddp,
+        fsdp=args.fsdp,
+        deepspeed=args.deepspeed,
         optim="adamw_torch",
-        adam_beta1=0.9,
-        adam_beta2=0.999,
-        adam_epsilon=1e-8,
-        dataloader_pin_memory=False,
+        adam_beta1=args.adam_beta1,
+        adam_beta2=args.adam_beta2,
+        adam_epsilon=args.adam_epsilon,
+        log_level=args.log_level,
+        ignore_data_skip=args.ignore_data_skip,
     )
     
     data_collator = DataCollatorForLanguageModeling(
@@ -185,11 +281,16 @@ def train_with_pytorch(args):
         model=model,
         args=training_args,
         train_dataset=tokenized_dataset["train"],
+        eval_dataset=tokenized_eval_dataset,
         data_collator=data_collator,
     )
     
     print("Starting training (PyTorch)...")
-    trainer.train()
+    if args.resume_from_checkpoint:
+        print(f"Resuming from checkpoint: {args.resume_from_checkpoint}")
+        trainer.train(resume_from_checkpoint=args.resume_from_checkpoint)
+    else:
+        trainer.train()
     
     print("Saving final model...")
     trainer.save_model(args.output_dir)
