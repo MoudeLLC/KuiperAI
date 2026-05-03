@@ -219,6 +219,16 @@ def train_with_pytorch(args):
         remove_columns=dataset["train"].column_names
     )
     
+    # Tokenize evaluation dataset if provided
+    tokenized_eval_dataset = None
+    if eval_dataset:
+        print("Tokenizing evaluation dataset...")
+        tokenized_eval_dataset = eval_dataset.map(
+            tokenize_function,
+            batched=True,
+            remove_columns=eval_dataset.column_names
+        )
+    
     training_args = TrainingArguments(
         output_dir=args.output_dir,
         per_device_train_batch_size=args.per_device_train_batch_size,
