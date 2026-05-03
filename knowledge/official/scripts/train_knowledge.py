@@ -115,8 +115,21 @@ def main():
 def train_with_pytorch(args):
     """Training with PyTorch (for GPU/CPU)"""
     print("Loading tokenizer and model (PyTorch)...")
+    
+    # Force GPU usage if available
+    device = "cuda" if torch.cuda.is_available() else "cpu"
+    print(f"Using device: {device}")
+    if device == "cuda":
+        print(f"GPU count: {torch.cuda.device_count()}")
+        for i in range(torch.cuda.device_count()):
+            print(f"  GPU {i}: {torch.cuda.get_device_name(i)}")
+    
     tokenizer = AutoTokenizer.from_pretrained(args.model_name_or_path)
-    model = AutoModelForCausalLM.from_pretrained(args.model_name_or_path)
+    model = AutoModelForCausalLM.from_pretrained(
+        args.model_name_or_path,
+        torch_dtype=torch.float16 if args.fp16 else torch.float32,
+        device_map="auto" if torch.cuda.is_available() else None
+    )
     
     if tokenizer.pad_token is None:
         tokenizer.pad_token = tokenizer.eos_token
